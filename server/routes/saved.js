@@ -70,4 +70,3 @@ router.get('/:postId/check', auth, async (req, res) => {
 });
 
 module.exports = router;
-

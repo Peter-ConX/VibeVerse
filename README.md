@@ -25,35 +25,35 @@ A Gen-Z style entertainment social platform combining YouTube, TikTok, and Insta
 ## Setup
 
 1. Install dependencies:
-```bash
+\`\`\`bash
 npm install
-```
+\`\`\`
 
 2. Set up environment variables:
-```bash
+\`\`\`bash
 cp .env.example .env
 # Edit .env with your MongoDB and Cloudinary credentials
-```
+\`\`\`
 
 3. Start MongoDB (if running locally):
-```bash
+\`\`\`bash
 # Make sure MongoDB is running on localhost:27017
-```
+\`\`\`
 
 4. Start the development server:
-```bash
+\`\`\`bash
 # Terminal 1 - Backend
 npm run server
 
 # Terminal 2 - Frontend
 npm run dev
-```
+\`\`\`
 
 5. Open [http://localhost:3000](http://localhost:3000)
 
 ## Project Structure
 
-```
+\`\`\`
 ├── app/              # Next.js app directory
 ├── server/           # Express backend
 │   ├── models/       # MongoDB models
@@ -61,7 +61,7 @@ npm run dev
 │   └── middleware/   # Auth middleware
 ├── components/       # React components
 └── public/           # Static assets
-```
+\`\`\`
 
 ## API Endpoints
 
@@ -100,4 +100,3 @@ npm run dev
 ## License
 
 MIT
-

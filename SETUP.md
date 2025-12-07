@@ -51,13 +51,13 @@ You have two options:
 ## Step 4: Create .env File
 
 1. Copy the `.env.example` file to `.env`:
-   ```bash
+   \`\`\`bash
    cp .env.example .env
-   ```
+   \`\`\`
 
 2. Open `.env` and fill in your credentials:
 
-```env
+\`\`\`env
 # MongoDB
 # For MongoDB Atlas (cloud):
 MONGODB_URI=mongodb+srv://your_username:your_password@cluster0.xxxxx.mongodb.net/silicon?retryWrites=true&w=majority
@@ -78,7 +78,7 @@ PORT=5000
 
 # Frontend URL (default: http://localhost:3000)
 FRONTEND_URL=http://localhost:3000
-```
+\`\`\`
 
 ### Generate JWT Secret
 
@@ -89,26 +89,26 @@ You can generate a random JWT secret using:
 ## Step 5: Start the Application
 
 ### Terminal 1 - Backend Server
-```bash
+\`\`\`bash
 npm run server
-```
+\`\`\`
 
 You should see:
-```
+\`\`\`
 ✅ MongoDB connected
 🚀 Server running on http://localhost:5000
-```
+\`\`\`
 
 ### Terminal 2 - Frontend (Next.js)
-```bash
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
 You should see:
-```
+\`\`\`
 ✓ Ready in X seconds
 ○ Local: http://localhost:3000
-```
+\`\`\`
 
 ## Step 6: Open the App
 
@@ -136,5 +136,3 @@ Open your browser and go to: [http://localhost:3000](http://localhost:3000)
 - MongoDB Atlas Docs: https://docs.atlas.mongodb.com/
 - Cloudinary Docs: https://cloudinary.com/documentation
 - Next.js Docs: https://nextjs.org/docs
-
-

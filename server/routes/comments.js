@@ -69,4 +69,3 @@ router.post('/:commentId/like', auth, async (req, res) => {
 });
 
 module.exports = router;
-

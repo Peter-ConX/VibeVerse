@@ -80,4 +80,3 @@ export default function StoriesBar({ userId }: { userId: string }) {
     </div>
   );
 }
-

@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 export const metadata: Metadata = {
   title: "Silicon - Social Entertainment Platform",
   description: "A Gen-Z style entertainment social platform",
+    generator: 'v0.app'
 };
 
 export default function RootLayout({
@@ -30,4 +31,3 @@ export default function RootLayout({
     </html>
   );
 }
-
