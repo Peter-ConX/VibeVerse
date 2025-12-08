@@ -1,305 +1,311 @@
-'use client';
+"use client"
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import BottomNav from '@/components/BottomNav';
-import StoriesBar from '@/components/StoriesBar';
-import { Heart, MessageCircle, Share2, MoreVertical, Play, Bookmark } from 'lucide-react';
-import ReactPlayer from 'react-player';
-import Image from 'next/image';
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import BottomNav from "@/components/BottomNav"
+import StoriesBar from "@/components/StoriesBar"
+import { Heart, MessageCircle, Share2, MoreVertical, Bookmark, Volume2, VolumeX } from "lucide-react"
+import ReactPlayer from "react-player"
+import Image from "next/image"
+import toast from "react-hot-toast"
 
 interface Post {
-  _id: string;
+  _id: string
   userId: {
-    _id: string;
-    username: string;
-    profilePicture: string;
-  };
-  videoUrl: string;
-  thumbnail: string;
-  caption: string;
-  likes: string[];
-  comments: string[];
-  shares: number;
-  type: string;
+    _id: string
+    username: string
+    profilePicture: string
+  }
+  videoUrl: string
+  thumbnail: string
+  caption: string
+  likes: string[]
+  comments: string[]
+  shares: number
+  type: string
 }
 
 export default function HomePage() {
-  const router = useRouter();
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
-  const [savedPosts, setSavedPosts] = useState<Set<string>>(new Set());
-  const [playingIndex, setPlayingIndex] = useState<number | null>(null);
-  const [userId, setUserId] = useState('');
+  const router = useRouter()
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set())
+  const [savedPosts, setSavedPosts] = useState<Set<string>>(new Set())
+  const [playingIndex, setPlayingIndex] = useState<number | null>(null)
+  const [userId, setUserId] = useState("")
+  const [muted, setMuted] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const id = localStorage.getItem('userId');
+    const token = localStorage.getItem("token")
+    const id = localStorage.getItem("userId")
     if (!token || !id) {
-      router.push('/welcome');
-      return;
+      router.push("/welcome")
+      return
     }
-    setUserId(id);
-    fetchPosts();
-  }, [router]);
+    setUserId(id)
+    fetchPosts()
+  }, [router])
 
   const fetchPosts = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/posts/feed', {
+      const token = localStorage.getItem("token")
+      const response = await fetch("http://localhost:5000/api/posts/feed", {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-      });
-      const data = await response.json();
-      setPosts(data);
-      
-      // Track which posts are liked
-      const liked = new Set<string>();
+      })
+      const data = await response.json()
+      setPosts(data)
+
+      const liked = new Set<string>()
       data.forEach((post: Post) => {
         if (post.likes.includes(userId)) {
-          liked.add(post._id);
+          liked.add(post._id)
         }
-      });
-      setLikedPosts(liked);
+      })
+      setLikedPosts(liked)
 
-      // Check saved posts
-      const saved = new Set<string>();
+      const saved = new Set<string>()
       for (const post of data) {
         try {
           const savedResponse = await fetch(`http://localhost:5000/api/saved/${post._id}/check`, {
             headers: {
-              'Authorization': `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
-          });
-          const savedData = await savedResponse.json();
+          })
+          const savedData = await savedResponse.json()
           if (savedData.saved) {
-            saved.add(post._id);
+            saved.add(post._id)
           }
         } catch (error) {
           // Ignore errors
         }
       }
-      setSavedPosts(saved);
+      setSavedPosts(saved)
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      console.error("Error fetching posts:", error)
+      toast.error("Failed to load posts")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleLike = async (postId: string) => {
-    // Backend prevents duplicate likes, but we check frontend state too
     if (likedPosts.has(postId)) {
-      // Will unlike
+      toast.error("You already liked this post")
+      return
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token")
       const response = await fetch(`http://localhost:5000/api/posts/${postId}/like`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-      });
-      const data = await response.json();
-      
-      setPosts(prev => prev.map(post => 
-        post._id === postId 
-          ? { ...post, likes: data.isLiked ? [...post.likes, userId] : post.likes.filter(id => id !== userId) }
-          : post
-      ));
-      
-      setLikedPosts(prev => {
-        const newSet = new Set(prev);
-        if (data.isLiked) {
-          newSet.add(postId);
-        } else {
-          newSet.delete(postId);
-        }
-        return newSet;
-      });
+      })
+      const data = await response.json()
+
+      setPosts((prev) => prev.map((post) => (post._id === postId ? { ...post, likes: [...post.likes, userId] } : post)))
+
+      setLikedPosts((prev) => {
+        const newSet = new Set(prev)
+        newSet.add(postId)
+        return newSet
+      })
+
+      toast.success("Liked!")
     } catch (error) {
-      console.error('Error liking post:', error);
+      console.error("Error liking post:", error)
+      toast.error("Failed to like post")
     }
-  };
+  }
 
   const handleSave = async (postId: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token")
       const response = await fetch(`http://localhost:5000/api/saved/${postId}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-      });
-      const data = await response.json();
-      
-      setSavedPosts(prev => {
-        const newSet = new Set(prev);
+      })
+      const data = await response.json()
+
+      setSavedPosts((prev) => {
+        const newSet = new Set(prev)
         if (data.saved) {
-          newSet.add(postId);
+          newSet.add(postId)
+          toast.success("Post saved")
         } else {
-          newSet.delete(postId);
+          newSet.delete(postId)
+          toast.success("Post unsaved")
         }
-        return newSet;
-      });
+        return newSet
+      })
     } catch (error) {
-      console.error('Error saving post:', error);
+      console.error("Error saving post:", error)
+      toast.error("Failed to save post")
     }
-  };
+  }
 
   const handleComment = (postId: string) => {
-    router.push(`/post/${postId}/comments`);
-  };
+    router.push(`/post/${postId}/comments`)
+  }
 
   const handleShare = async (postId: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token")
       const response = await fetch(`http://localhost:5000/api/posts/${postId}/share`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-      });
-      const data = await response.json();
-      
-      // Copy to clipboard
-      navigator.clipboard.writeText(data.shareUrl);
-      alert('Link copied to clipboard!');
-      
-      setPosts(prev => prev.map(post => 
-        post._id === postId 
-          ? { ...post, shares: data.shares }
-          : post
-      ));
+      })
+      const data = await response.json()
+
+      navigator.clipboard.writeText(data.shareUrl)
+      toast.success("Link copied!")
+
+      setPosts((prev) => prev.map((post) => (post._id === postId ? { ...post, shares: data.shares } : post)))
     } catch (error) {
-      console.error('Error sharing post:', error);
+      console.error("Error sharing post:", error)
+      toast.error("Failed to share")
     }
-  };
+  }
 
   const handleProfileClick = (userId: string) => {
-    router.push(`/profile/${userId}`);
-  };
+    router.push(`/profile/${userId}`)
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-accent text-xl">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-b from-black via-purple-900 to-black flex items-center justify-center">
+        <div className="text-[#FFD84D] text-xl animate-pulse">Loading...</div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Stories Bar */}
+    <div className="min-h-screen bg-gradient-to-b from-black via-purple-900 to-black pb-20">
       {userId && <StoriesBar userId={userId} />}
 
       {/* Feed */}
-      <div className="space-y-4 px-4">
+      <div className="max-w-md mx-auto space-y-3 px-2">
         {posts.length === 0 ? (
           <div className="text-center text-gray-400 mt-20">
             <p>No posts yet. Follow users to see their content!</p>
           </div>
         ) : (
           posts.map((post, index) => (
-            <div key={post._id} className="bg-primary/20 rounded-lg overflow-hidden border border-primary/50">
+            <div key={post._id} className="card-dark overflow-hidden">
               {/* Post Header */}
               <div className="flex items-center justify-between p-3">
-                <div 
-                  className="flex items-center gap-3 cursor-pointer"
+                <div
+                  className="flex items-center gap-3 cursor-pointer hover:opacity-80"
                   onClick={() => handleProfileClick(post.userId._id)}
                 >
                   {post.userId.profilePicture ? (
                     <Image
-                      src={post.userId.profilePicture}
+                      src={post.userId.profilePicture || "/placeholder.svg"}
                       alt={post.userId.username}
                       width={40}
                       height={40}
-                      className="w-10 h-10 rounded-full object-cover"
+                      className="w-10 h-10 rounded-full object-cover border-2 border-[#FFD84D]"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-accent">
+                    <div className="w-10 h-10 rounded-full bg-[#2B014D] flex items-center justify-center text-[#FFD84D] font-bold">
                       {post.userId.username[0].toUpperCase()}
                     </div>
                   )}
                   <span className="font-semibold text-white">{post.userId.username}</span>
                 </div>
-                <MoreVertical className="w-5 h-5 text-gray-400 cursor-pointer" />
+                <MoreVertical className="w-5 h-5 text-[#FFD84D] cursor-pointer hover:text-yellow-300" />
               </div>
 
               {/* Video */}
               <div className="relative w-full aspect-[9/16] bg-black">
                 {post.videoUrl ? (
-                  <ReactPlayer
-                    url={post.videoUrl}
-                    width="100%"
-                    height="100%"
-                    playing={playingIndex === index}
-                    controls
-                    onPlay={() => {
-                      // Track view
-                      fetch(`http://localhost:5000/api/posts/${post._id}/view`, {
-                        method: 'POST',
-                        headers: {
-                          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        },
-                      });
-                      setPlayingIndex(index);
-                    }}
-                  />
+                  <div className="relative w-full h-full">
+                    <ReactPlayer
+                      url={post.videoUrl}
+                      width="100%"
+                      height="100%"
+                      playing={playingIndex === index}
+                      controls
+                      muted={muted}
+                      onPlay={() => {
+                        fetch(`http://localhost:5000/api/posts/${post._id}/view`, {
+                          method: "POST",
+                          headers: {
+                            Authorization: `Bearer ${localStorage.getItem("token")}`,
+                          },
+                        })
+                        setPlayingIndex(index)
+                      }}
+                    />
+                    <button
+                      onClick={() => setMuted(!muted)}
+                      className="absolute top-3 right-3 bg-black/50 rounded-full p-2 hover:bg-black/70"
+                    >
+                      {muted ? (
+                        <VolumeX className="w-4 h-4 text-[#FFD84D]" />
+                      ) : (
+                        <Volume2 className="w-4 h-4 text-[#FFD84D]" />
+                      )}
+                    </button>
+                  </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Play className="w-16 h-16 text-gray-400" />
+                    <div className="text-[#FFD84D] text-2xl">No Video</div>
                   </div>
                 )}
               </div>
 
               {/* Actions */}
               <div className="p-3 space-y-2">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleLike(post._id)}
-                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                    disabled={likedPosts.has(post._id)}
+                    className={`flex items-center gap-1 transition-all ${
+                      likedPosts.has(post._id) ? "text-[#FFD84D]" : "text-gray-400 hover:text-[#FFD84D]"
+                    }`}
                   >
-                    <Heart
-                      className={`w-6 h-6 transition-colors ${
-                        likedPosts.has(post._id) ? 'fill-accent text-accent' : 'text-gray-400'
-                      }`}
-                    />
-                    <span className="text-sm text-gray-300">{post.likes.length}</span>
+                    <Heart className={`w-6 h-6 transition-all ${likedPosts.has(post._id) ? "fill-[#FFD84D]" : ""}`} />
+                    <span className="text-sm font-semibold">{post.likes.length}</span>
                   </button>
                   <button
                     onClick={() => handleComment(post._id)}
-                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                    className="flex items-center gap-1 text-gray-400 hover:text-[#FFD84D] transition-colors"
                   >
-                    <MessageCircle className="w-6 h-6 text-gray-400" />
-                    <span className="text-sm text-gray-300">{post.comments.length}</span>
+                    <MessageCircle className="w-6 h-6" />
+                    <span className="text-sm font-semibold">{post.comments.length}</span>
                   </button>
                   <button
                     onClick={() => handleShare(post._id)}
-                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                    className="flex items-center gap-1 text-gray-400 hover:text-[#FFD84D] transition-colors"
                   >
-                    <Share2 className="w-6 h-6 text-gray-400" />
-                    <span className="text-sm text-gray-300">{post.shares}</span>
+                    <Share2 className="w-6 h-6" />
+                    <span className="text-sm font-semibold">{post.shares}</span>
                   </button>
                   <button
                     onClick={() => handleSave(post._id)}
-                    className="flex items-center gap-2 hover:opacity-80 transition-opacity ml-auto"
+                    className={`ml-auto transition-colors ${
+                      savedPosts.has(post._id) ? "text-[#FFD84D]" : "text-gray-400 hover:text-[#FFD84D]"
+                    }`}
                   >
                     <Bookmark
-                      className={`w-6 h-6 transition-colors ${
-                        savedPosts.has(post._id) ? 'fill-accent text-accent' : 'text-gray-400'
-                      }`}
+                      className={`w-6 h-6 transition-all ${savedPosts.has(post._id) ? "fill-[#FFD84D]" : ""}`}
                     />
                   </button>
                 </div>
 
                 {/* Caption */}
                 {post.caption && (
-                  <div className="text-sm text-gray-300">
-                    <span className="font-semibold">{post.userId.username}</span> {post.caption}
+                  <div className="text-sm text-gray-300 pt-2 border-t border-[#FFD84D]/20">
+                    <span className="font-semibold text-[#FFD84D]">{post.userId.username}</span>
+                    <span className="text-gray-300"> {post.caption}</span>
                   </div>
                 )}
               </div>
@@ -310,5 +316,5 @@ export default function HomePage() {
 
       <BottomNav />
     </div>
-  );
+  )
 }

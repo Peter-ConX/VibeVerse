@@ -3,9 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 0, 0, 0;
-  --background-end-rgb: 26, 0, 48;
+  --primary: #2b014d;
+  --accent: #ffd84d;
+  --background: #000000;
+  --surface: #1a0030;
 }
 
 * {
@@ -20,15 +21,14 @@ body {
   overflow-x: hidden;
   background: #000000;
   color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+    "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: linear-gradient(to bottom, #1A0030, #000000);
+  background: linear-gradient(135deg, #000000 0%, #1a0030 50%, #000000 100%);
   min-height: 100vh;
 }
 
@@ -37,26 +37,57 @@ a {
   text-decoration: none;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar with purple theme */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1A0030;
+  background: #1a0030;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2B014D;
+  background: #2b014d;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3D0266;
+  background: #3d0266;
 }
 
-/* Smooth transitions */
+/* Smooth transitions and hover effects */
 * {
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+/* Yellow accent for buttons and interactive elements */
+button,
+a {
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Utility classes for the theme */
+@layer components {
+  .btn-primary {
+    @apply bg-[#FFD84D] text-[#2B014D] font-bold rounded-lg py-3 px-6 hover:bg-yellow-300 transition-all;
+  }
+
+  .btn-secondary {
+    @apply bg-[#2B014D] text-[#FFD84D] font-bold rounded-lg py-3 px-6 border-2 border-[#FFD84D] hover:bg-purple-900;
+  }
+
+  .card-dark {
+    @apply bg-gradient-to-br from-[#1A0030] to-[#2B014D] rounded-lg border border-[#FFD84D]/20;
+  }
+
+  .text-accent {
+    @apply text-[#FFD84D];
+  }
+
+  .text-primary {
+    @apply text-[#2B014D];
+  }
 }
