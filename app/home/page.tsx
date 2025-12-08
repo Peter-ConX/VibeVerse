@@ -4,10 +4,11 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import BottomNav from "@/components/BottomNav"
 import StoriesBar from "@/components/StoriesBar"
-import { Heart, MessageCircle, Share2, MoreVertical, Bookmark, Volume2, VolumeX } from "lucide-react"
+import { Heart, MessageCircle, Share2, MoreVertical, Bookmark, Volume2, VolumeX, Music } from "lucide-react"
 import ReactPlayer from "react-player"
 import Image from "next/image"
 import toast from "react-hot-toast"
+import { Toaster } from "react-hot-toast"
 
 interface Post {
   _id: string
@@ -186,127 +187,160 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black pb-20">
+    <div className="min-h-screen bg-black pb-24">
+      <Toaster position="top-center" />
+
       {userId && <StoriesBar userId={userId} />}
 
-      {/* Feed */}
-      <div className="max-w-md mx-auto space-y-2 px-0">
+      {/* TikTok-style feed */}
+      <div className="flex flex-col items-center">
         {posts.length === 0 ? (
-          <div className="text-center text-gray-500 mt-20 px-4">
-            <p>No posts yet. Follow users to see their content!</p>
+          <div className="text-center text-gray-500 mt-20 px-4 pt-20">
+            <p className="text-lg">No posts yet. Follow users to see their content!</p>
           </div>
         ) : (
           posts.map((post, index) => (
-            <div key={post._id} className="bg-black border-b border-[#FFD84D]/5">
-              {/* Post Header */}
-              <div className="flex items-center justify-between p-3 px-4">
+            <div
+              key={post._id}
+              className="relative w-full max-w-md h-screen flex items-center justify-center snap-center overflow-hidden"
+            >
+              {/* Video Background */}
+              <div className="absolute inset-0 bg-black">
+                {post.videoUrl ? (
+                  <ReactPlayer
+                    url={post.videoUrl}
+                    width="100%"
+                    height="100%"
+                    playing={playingIndex === index}
+                    controls={false}
+                    muted={muted}
+                    onPlay={() => {
+                      fetch(`http://localhost:5000/api/posts/${post._id}/view`, {
+                        method: "POST",
+                        headers: {
+                          Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        },
+                      }).catch(() => {})
+                      setPlayingIndex(index)
+                    }}
+                    style={{ objectFit: "cover" }}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-[#2B014D] to-black flex items-center justify-center">
+                    <div className="text-[#FFD84D] text-center">
+                      <Music className="w-12 h-12 mx-auto mb-2" />
+                      No Video
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Gradient overlays */}
+              <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none h-40" />
+
+              {/* Left side - Creator info & caption */}
+              <div className="absolute bottom-24 left-0 right-0 px-4 text-white z-10">
                 <div
-                  className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+                  className="flex items-center gap-3 mb-3 cursor-pointer hover:opacity-80"
                   onClick={() => handleProfileClick(post.userId._id)}
                 >
                   {post.userId.profilePicture ? (
                     <Image
                       src={post.userId.profilePicture || "/placeholder.svg"}
                       alt={post.userId.username}
-                      width={40}
-                      height={40}
-                      className="w-10 h-10 rounded-full object-cover"
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-[#FFD84D]"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-[#2B014D] flex items-center justify-center text-[#FFD84D] font-bold text-sm">
+                    <div className="w-12 h-12 rounded-full bg-[#2B014D] flex items-center justify-center text-[#FFD84D] font-bold border-2 border-[#FFD84D]">
                       {post.userId.username[0].toUpperCase()}
                     </div>
                   )}
                   <div>
-                    <span className="font-semibold text-white text-sm block">{post.userId.username}</span>
-                    <span className="text-xs text-gray-400">15 minutes ago</span>
+                    <div className="font-bold text-white">{post.userId.username}</div>
+                    <div className="text-xs text-gray-300">Follow</div>
                   </div>
                 </div>
-                <MoreVertical className="w-5 h-5 text-gray-400 hover:text-[#FFD84D] cursor-pointer" />
+
+                {post.caption && <p className="text-sm text-white line-clamp-2 mb-3">{post.caption}</p>}
+
+                <div className="flex items-center gap-2">
+                  <Music className="w-4 h-4" />
+                  <span className="text-xs">Original Sound</span>
+                </div>
               </div>
 
-              {/* Video */}
-              <div className="relative w-full aspect-[9/16] bg-black">
-                {post.videoUrl ? (
-                  <div className="relative w-full h-full">
-                    <ReactPlayer
-                      url={post.videoUrl}
-                      width="100%"
-                      height="100%"
-                      playing={playingIndex === index}
-                      controls
-                      muted={muted}
-                      onPlay={() => {
-                        fetch(`http://localhost:5000/api/posts/${post._id}/view`, {
-                          method: "POST",
-                          headers: {
-                            Authorization: `Bearer ${localStorage.getItem("token")}`,
-                          },
-                        })
-                        setPlayingIndex(index)
-                      }}
+              {/* Right side - Action buttons (TikTok style) */}
+              <div className="absolute right-4 bottom-32 flex flex-col gap-6 z-20">
+                {/* Like button */}
+                <button
+                  onClick={() => handleLike(post._id)}
+                  disabled={likedPosts.has(post._id)}
+                  className="flex flex-col items-center gap-1 group"
+                >
+                  <div className="w-12 h-12 rounded-full bg-[#2B014D]/80 backdrop-blur flex items-center justify-center group-hover:bg-[#2B014D] transition-all group-active:scale-95">
+                    <Heart
+                      className={`w-6 h-6 transition-all ${
+                        likedPosts.has(post._id)
+                          ? "fill-[#2B014D] text-[#FFD84D]"
+                          : "text-white group-hover:text-[#FFD84D]"
+                      }`}
                     />
-                    <button
-                      onClick={() => setMuted(!muted)}
-                      className="absolute top-4 right-4 bg-black/60 backdrop-blur rounded-full p-2 hover:bg-black/80"
-                    >
-                      {muted ? <VolumeX className="w-4 h-4 text-white" /> : <Volume2 className="w-4 h-4 text-white" />}
-                    </button>
                   </div>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="text-[#FFD84D]">No Video</div>
-                  </div>
-                )}
-              </div>
+                  <span className="text-xs text-white font-semibold">{post.likes.length}</span>
+                </button>
 
-              {/* Actions */}
-              <div className="px-4 py-3 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => handleLike(post._id)}
-                      disabled={likedPosts.has(post._id)}
-                      className="flex items-center gap-1.5 text-gray-400 hover:text-[#FFD84D] transition-colors"
-                    >
-                      <Heart
-                        className={`w-5 h-5 transition-all ${likedPosts.has(post._id) ? "fill-[#FFD84D] text-[#FFD84D]" : ""}`}
-                      />
-                      <span className="text-xs">{post.likes.length}</span>
-                    </button>
-                    <button
-                      onClick={() => handleComment(post._id)}
-                      className="flex items-center gap-1.5 text-gray-400 hover:text-[#FFD84D] transition-colors"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                      <span className="text-xs">{post.comments.length}</span>
-                    </button>
-                    <button
-                      onClick={() => handleShare(post._id)}
-                      className="flex items-center gap-1.5 text-gray-400 hover:text-[#FFD84D] transition-colors"
-                    >
-                      <Share2 className="w-5 h-5" />
-                      <span className="text-xs">{post.shares}</span>
-                    </button>
+                {/* Comment button */}
+                <button onClick={() => handleComment(post._id)} className="flex flex-col items-center gap-1 group">
+                  <div className="w-12 h-12 rounded-full bg-[#2B014D]/80 backdrop-blur flex items-center justify-center group-hover:bg-[#2B014D] transition-all group-active:scale-95">
+                    <MessageCircle className="w-6 h-6 text-white group-hover:text-[#FFD84D] transition-colors" />
                   </div>
-                  <button
-                    onClick={() => handleSave(post._id)}
-                    className={`transition-colors ${savedPosts.has(post._id) ? "text-[#FFD84D]" : "text-gray-400 hover:text-[#FFD84D]"}`}
+                  <span className="text-xs text-white font-semibold">{post.comments.length}</span>
+                </button>
+
+                {/* Share button */}
+                <button onClick={() => handleShare(post._id)} className="flex flex-col items-center gap-1 group">
+                  <div className="w-12 h-12 rounded-full bg-[#2B014D]/80 backdrop-blur flex items-center justify-center group-hover:bg-[#2B014D] transition-all group-active:scale-95">
+                    <Share2 className="w-6 h-6 text-white group-hover:text-[#FFD84D] transition-colors" />
+                  </div>
+                  <span className="text-xs text-white font-semibold">{post.shares}</span>
+                </button>
+
+                {/* Save/Bookmark button */}
+                <button onClick={() => handleSave(post._id)} className="flex flex-col items-center gap-1 group">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all group-active:scale-95 backdrop-blur ${
+                      savedPosts.has(post._id) ? "bg-[#2B014D]" : "bg-[#2B014D]/80 group-hover:bg-[#2B014D]"
+                    }`}
                   >
                     <Bookmark
-                      className={`w-5 h-5 transition-all ${savedPosts.has(post._id) ? "fill-[#FFD84D]" : ""}`}
+                      className={`w-6 h-6 transition-all ${
+                        savedPosts.has(post._id)
+                          ? "fill-[#FFD84D] text-[#FFD84D]"
+                          : "text-white group-hover:text-[#FFD84D]"
+                      }`}
                     />
-                  </button>
-                </div>
-
-                {/* Caption */}
-                {post.caption && (
-                  <div className="text-xs text-gray-300">
-                    <span className="font-semibold text-white">{post.userId.username}</span>
-                    <span className="text-gray-400"> {post.caption}</span>
                   </div>
-                )}
+                </button>
+
+                {/* Mute button */}
+                <button onClick={() => setMuted(!muted)} className="flex flex-col items-center gap-1 group">
+                  <div className="w-12 h-12 rounded-full bg-[#2B014D]/80 backdrop-blur flex items-center justify-center group-hover:bg-[#2B014D] transition-all group-active:scale-95">
+                    {muted ? (
+                      <VolumeX className="w-6 h-6 text-white group-hover:text-[#FFD84D] transition-colors" />
+                    ) : (
+                      <Volume2 className="w-6 h-6 text-white group-hover:text-[#FFD84D] transition-colors" />
+                    )}
+                  </div>
+                </button>
               </div>
+
+              {/* More options button */}
+              <button className="absolute top-4 right-4 bg-[#2B014D]/60 backdrop-blur rounded-full p-2 hover:bg-[#2B014D] z-20 transition-all">
+                <MoreVertical className="w-5 h-5 text-white" />
+              </button>
             </div>
           ))
         )}
