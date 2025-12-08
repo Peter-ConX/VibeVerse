@@ -105,13 +105,12 @@ export default function ShortsPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:5000/api/posts/${shortId}/like`, {
+      await fetch(`http://localhost:5000/api/posts/${shortId}/like`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
-      const data = await response.json()
 
       setShorts((prev) =>
         prev.map((short) => (short._id === shortId ? { ...short, likes: [...short.likes, userId] } : short)),
@@ -126,32 +125,6 @@ export default function ShortsPage() {
       toast.success("Liked!")
     } catch (error) {
       toast.error("Failed to like")
-    }
-  }
-
-  const handleSave = async (shortId: string) => {
-    try {
-      const token = localStorage.getItem("token")
-      await fetch(`http://localhost:5000/api/saved/${shortId}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      setSavedShorts((prev) => {
-        const newSet = new Set(prev)
-        if (newSet.has(shortId)) {
-          newSet.delete(shortId)
-          toast.success("Unsaved")
-        } else {
-          newSet.add(shortId)
-          toast.success("Saved!")
-        }
-        return newSet
-      })
-    } catch (error) {
-      toast.error("Failed to save")
     }
   }
 
@@ -180,8 +153,8 @@ export default function ShortsPage() {
 
   if (shorts.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-purple-900 to-black flex items-center justify-center pb-20">
-        <div className="text-[#FFD84D] text-lg">No shorts available</div>
+      <div className="min-h-screen bg-black flex items-center justify-center pb-20">
+        <div className="text-[#FFD84D]">No shorts available</div>
         <BottomNav />
       </div>
     )
@@ -216,24 +189,21 @@ export default function ShortsPage() {
                   />
                 ) : (
                   <div className="w-full h-full bg-[#2B014D]/20 flex items-center justify-center">
-                    <div className="text-[#FFD84D] text-2xl">No Video</div>
+                    <div className="text-[#FFD84D]">No Video</div>
                   </div>
                 )}
               </div>
 
+              {/* Mute Button */}
               <button
                 onClick={() => setMuted(!muted)}
-                className="absolute top-4 right-4 bg-black/60 rounded-full p-2 hover:bg-black/80 transition-all"
+                className="absolute top-4 right-4 bg-black/60 backdrop-blur rounded-full p-2 hover:bg-black/80"
               >
-                {muted ? (
-                  <VolumeX className="w-5 h-5 text-[#FFD84D]" />
-                ) : (
-                  <Volume2 className="w-5 h-5 text-[#FFD84D]" />
-                )}
+                {muted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
               </button>
 
-              {/* Overlay Info */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent">
+              {/* Bottom Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                 <div className="flex items-center gap-3 mb-3">
                   {currentShort.userId.profilePicture ? (
                     <Image
@@ -241,45 +211,67 @@ export default function ShortsPage() {
                       alt={currentShort.userId.username}
                       width={40}
                       height={40}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-[#FFD84D]"
+                      className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-[#2B014D] flex items-center justify-center text-[#FFD84D] font-bold">
+                    <div className="w-10 h-10 rounded-full bg-[#2B014D] flex items-center justify-center text-[#FFD84D] font-bold text-sm">
                       {currentShort.userId.username[0].toUpperCase()}
                     </div>
                   )}
-                  <span className="font-semibold text-white">{currentShort.userId.username}</span>
+                  <div>
+                    <span className="font-semibold text-white text-sm block">{currentShort.userId.username}</span>
+                    <span className="text-xs text-gray-400">@{currentShort.userId.username.toLowerCase()}</span>
+                  </div>
                 </div>
-                {currentShort.caption && <p className="text-sm text-gray-300">{currentShort.caption}</p>}
+                {currentShort.caption && <p className="text-sm text-gray-100 mb-2">{currentShort.caption}</p>}
               </div>
 
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-6">
+              {/* Right Side Actions */}
+              <div className="absolute right-4 bottom-20 flex flex-col gap-4">
                 <button
                   onClick={() => handleLike(currentShort._id)}
                   disabled={likedShorts.has(currentShort._id)}
                   className="flex flex-col items-center hover:opacity-80 transition-opacity"
                 >
-                  <div className="bg-black/60 rounded-full p-3 hover:bg-black/80">
+                  <div className="bg-black/60 backdrop-blur rounded-full p-3 hover:bg-black/80">
                     <Heart
                       className={`w-6 h-6 transition-all ${
                         likedShorts.has(currentShort._id) ? "fill-[#FFD84D] text-[#FFD84D]" : "text-white"
                       }`}
                     />
                   </div>
-                  <span className="text-xs text-[#FFD84D] mt-2 font-semibold">{currentShort.likes.length}</span>
+                  <span className="text-xs text-white mt-2 font-semibold">{currentShort.likes.length}</span>
                 </button>
-                <button onClick={() => handleComment(currentShort._id)} className="flex flex-col items-center">
-                  <div className="bg-black/60 rounded-full p-3 hover:bg-black/80">
+                <button
+                  onClick={() => handleComment(currentShort._id)}
+                  className="flex flex-col items-center hover:opacity-80 transition-opacity"
+                >
+                  <div className="bg-black/60 backdrop-blur rounded-full p-3 hover:bg-black/80">
                     <MessageCircle className="w-6 h-6 text-white" />
                   </div>
-                  <span className="text-xs text-[#FFD84D] mt-2 font-semibold">{currentShort.comments.length}</span>
+                  <span className="text-xs text-white mt-2 font-semibold">{currentShort.comments.length}</span>
                 </button>
-                <button onClick={() => handleShare(currentShort._id)} className="flex flex-col items-center">
-                  <div className="bg-black/60 rounded-full p-3 hover:bg-black/80">
+                <button
+                  onClick={() => handleShare(currentShort._id)}
+                  className="flex flex-col items-center hover:opacity-80 transition-opacity"
+                >
+                  <div className="bg-black/60 backdrop-blur rounded-full p-3 hover:bg-black/80">
                     <Share2 className="w-6 h-6 text-white" />
                   </div>
-                  <span className="text-xs text-[#FFD84D] mt-2 font-semibold">{currentShort.shares}</span>
+                  <span className="text-xs text-white mt-2 font-semibold">{currentShort.shares}</span>
                 </button>
+              </div>
+
+              {/* Progress Indicator */}
+              <div className="absolute top-4 left-4 right-4 flex gap-1 h-0.5">
+                {shorts.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex-1 rounded-full transition-all ${
+                      idx === currentIndex ? "bg-[#FFD84D]" : "bg-gray-600"
+                    }`}
+                  />
+                ))}
               </div>
             </>
           )}
