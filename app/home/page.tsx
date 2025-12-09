@@ -207,6 +207,7 @@ export default function HomePage() {
               {/* Video Background */}
               <div className="absolute inset-0 bg-black">
                 {post.videoUrl ? (
+                  // @ts-ignore - react-player types issue
                   <ReactPlayer
                     url={post.videoUrl}
                     width="100%"
