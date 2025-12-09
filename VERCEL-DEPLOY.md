@@ -5,13 +5,13 @@ Your app is ready to deploy! The local Windows DLL issue won't affect Vercel bui
 ## Quick Deploy Options:
 
 ### Option 1: Deploy via Vercel CLI (Recommended)
-```bash
+\`\`\`bash
 # Install Vercel CLI globally
 npm i -g vercel
 
 # Deploy
 vercel
-```
+\`\`\`
 
 ### Option 2: Deploy via GitHub + Vercel Dashboard
 1. Push your code to GitHub
@@ -47,4 +47,3 @@ Vercel will auto-detect:
 3. ✅ Your app will be live at `your-app.vercel.app`
 
 Your code is production-ready! 🚀
-
